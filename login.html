@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AMT Log In</title>
+  <link rel="stylesheet" href="./login.css">
+</head>
+
+<body>
+
+  <div class="login-card">
+
+    <!-- LEFT: Branding -->
+    <div class="login-left">
+      <img src="images/ub.jpg" alt="UB Logo" class="login-logo">
+      <h1 class="login-brand">AMT Borrowing System Management</h1>
+      <p class="login-sub">Aviation Maintenance Technology<br>Tool Tracking &amp; Inventory</p>
+    </div>
+
+    <!-- RIGHT: Login form -->
+    <div class="login-right">
+      <h2 class="login-title">Log In</h2>
+      <p class="login-hint">Admin access only</p>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+
+        <div class="login-field">
+          <label for="username">Email</label>
+          <input type="email" id="username" placeholder="Enter admin email" required autocomplete="username">
+        </div>
+
+        <div class="login-field">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter password" required autocomplete="current-password">
+        </div>
+
+        <div class="login-error" id="loginError"></div>
+
+        <button type="submit" class="login-btn" id="loginBtn">Log In</button>
+
+      </form>
+    </div>
+
+  </div>
+
+  <script>
+    async function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const err      = document.getElementById('loginError');
+      const btn      = document.getElementById('loginBtn');
+
+      err.style.display = 'none';
+      btn.textContent = 'Logging in…';
+      btn.disabled = true;
+
+      try {
+        const res  = await fetch('api/login.php', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          window.location.href = 'index.html';
+        } else {
+          err.textContent = data.error || 'Incorrect username or password.';
+          err.style.display = 'block';
+          btn.textContent = 'Log In';
+          btn.disabled = false;
+        }
+      } catch {
+        err.textContent = 'Could not connect to server. Please try again.';
+        err.style.display = 'block';
+        btn.textContent = 'Log In';
+        btn.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+</html>

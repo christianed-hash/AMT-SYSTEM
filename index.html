@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>AMT System — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0c1f3f;
+      --navy2: #16325c;
+      --blue: #1a56db;
+      --gold: #e8a020;
+      --green: #0d9e6e;
+      --red: #dc2626;
+      --bg: #eef2f9;
+      --card: #ffffff;
+      --text: #0c1f3f;
+      --muted: #5e738a;
+      --border: #dde5f0;
+      --bottom-nav-h: 68px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overscroll-behavior-y: none;
+    }
+
+    /* ── DESKTOP SIDEBAR ─────────────────────────────────────── */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: 230px; height: 100vh;
+      background: var(--navy);
+      display: flex; flex-direction: column;
+      z-index: 100;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.18);
+    }
+
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 12px;
+      padding: 22px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .sidebar-img {
+      width: 38px; height: 38px; border-radius: 10px;
+      object-fit: cover; background: rgba(255,255,255,0.1);
+    }
+
+    .sidebar-logo span { color: white; font-weight: 700; font-size: 15px; }
+
+    .sidebar ul { list-style: none; padding: 10px 0; flex: 1; }
+
+    .sidebar ul li {
+      padding: 13px 20px; color: rgba(255,255,255,0.6);
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      border-left: 3px solid transparent; transition: all 0.17s;
+    }
+
+    .sidebar ul li:hover { color: white; background: rgba(255,255,255,0.07); }
+    .sidebar ul li.active { color: white; border-left-color: var(--gold); background: rgba(255,255,255,0.1); }
+
+    .sidebar-user {
+      padding: 14px 16px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .sidebar-user-icon {
+      font-size: 20px; background: rgba(255,255,255,0.1);
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .sidebar-user-name { color: white; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+
+    .sidebar-logout {
+      background: rgba(220,38,38,0.18); color: #fca5a5;
+      border: 1px solid rgba(220,38,38,0.3);
+      padding: 3px 9px; border-radius: 5px;
+      font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+
+    /* ── MOBILE HEADER ───────────────────────────────────────── */
+    .mob-header {
+      display: none; position: fixed; top: 0; left: 0; right: 0;
+      background: var(--navy); z-index: 200;
+      padding: 0 16px;
+      padding-top: env(safe-area-inset-top, 0px);
+      height: calc(56px + env(safe-area-inset-top, 0px));
+      align-items: flex-end; justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .mob-header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; padding-bottom: 12px;
+    }
+
+    .mob-title { color: white; font-size: 16px; font-weight: 700; }
+
+    .mob-header-right { display: flex; align-items: center; gap: 8px; }
+
+    .mob-sy-badge {
+      font-size: 10px; font-weight: 700; background: var(--gold);
+      color: var(--navy); padding: 3px 8px; border-radius: 20px;
+    }
+
+    /* ── MOBILE BOTTOM NAV ───────────────────────────────────── */
+    .mob-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--navy); z-index: 200;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    .mob-nav-row { display: flex; justify-content: space-around; }
+
+    .mob-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 600;
+      padding: 10px 0 8px; flex: 1; cursor: pointer; text-decoration: none;
+      transition: color 0.15s; border: none; background: none; font-family: inherit;
+    }
+
+    .mob-nav-item .ni { font-size: 22px; }
+    .mob-nav-item.active { color: var(--gold); }
+
+    /* ── MAIN ────────────────────────────────────────────────── */
+    .main { margin-left: 230px; padding: 24px; min-height: 100vh; }
+
+    /* ── TOPBAR ──────────────────────────────────────────────── */
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 22px; flex-wrap: wrap; gap: 10px;
+    }
+
+    .topbar h1 { font-size: 22px; font-weight: 800; color: var(--navy); }
+
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+    .sy-badge {
+      font-size: 12px; font-weight: 700; background: var(--navy);
+      color: white; padding: 4px 12px; border-radius: 20px;
+    }
+
+    .new-sy-btn {
+      background: var(--navy); color: white; border: none;
+      padding: 8px 14px; border-radius: 9px; font-size: 13px;
+      font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.15s;
+    }
+
+    .new-sy-btn:hover { background: var(--navy2); }
+
+    #clock { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+    /* ── STAT CARDS ──────────────────────────────────────────── */
+    .dash-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+
+    .dash-stat {
+      background: var(--card); border-radius: 16px; padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .ds-icon { font-size: 28px; }
+    .ds-val { font-size: 30px; font-weight: 800; line-height: 1; }
+    .ds-label { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+    .stat--navy .ds-val { color: var(--navy); }
+    .stat--gold .ds-val { color: var(--gold); }
+    .stat--green .ds-val { color: var(--green); }
+
+    /* ── MOBILE SY ROW ───────────────────────────────────────── */
+    #mobileSyRow {
+      display: none; align-items: center; gap: 8px;
+      margin-bottom: 14px; flex-wrap: wrap;
+    }
+
+    /* ── SECTION CARD ────────────────────────────────────────── */
+    .section-card {
+      background: var(--card); border-radius: 18px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 18px 20px; margin-bottom: 18px;
+    }
+
+    .section-card h2 {
+      font-size: 15px; font-weight: 700; color: var(--navy);
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+
+    .pending-badge {
+      background: var(--red); color: white;
+      border-radius: 12px; padding: 1px 8px;
+      font-size: 12px; font-weight: 700;
+    }
+
+    /* ── YEAR TABS ───────────────────────────────────────────── */
+    .yr-tabs {
+      display: flex; gap: 5px; margin-bottom: 12px;
+      overflow-x: auto; padding-bottom: 2px; scrollbar-width: none;
+    }
+    .yr-tabs::-webkit-scrollbar { display: none; }
+
+    .yr-tab {
+      padding: 6px 14px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: white;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      color: var(--muted); font-family: inherit; white-space: nowrap;
+      transition: all 0.14s; flex-shrink: 0;
+    }
+
+    .yr-tab:hover { border-color: var(--blue); color: var(--blue); }
+    .yr-tab--active { background: var(--navy); color: white; border-color: var(--navy); }
+
+    /* ── BORROW FORM ─────────────────────────────────────────── */
+    .borrow-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+
+    .form-group label {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 11px 13px; border-radius: 10px;
+      border: 1.5px solid var(--border); font-size: 14px;
+      font-family: inherit; color: var(--text); background: white;
+      transition: border-color 0.14s; width: 100%;
+      -webkit-appearance: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus { outline: none; border-color: var(--blue); }
+
+    .submit-btn {
+      grid-column: 1 / -1; background: var(--navy); color: white;
+      border: none; padding: 13px; border-radius: 11px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: background 0.15s; touch-action: manipulation;
+    }
+
+    .submit-btn:hover { background: var(--blue); }
+    .submit-btn:active { transform: scale(0.98); }
+
+    /* ── CONTROLS ────────────────────────────────────────────── */
+    .controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+
+    .controls input, .controls select {
+      padding: 10px 13px; border-radius: 10px;
+      border: 1.5px solid var(--border); font-size: 14px;
+      font-family: inherit; color: var(--text); background: white;
+      -webkit-appearance: none;
+    }
+
+    .controls input { flex: 1; min-width: 140px; }
+    .controls input:focus, .controls select:focus { outline: none; border-color: var(--blue); }
+
+    /* ── DESKTOP TABLE ───────────────────────────────────────── */
+    .table-wrap { background: var(--card); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead tr { background: #f5f8ff; }
+
+    th {
+      padding: 12px 14px; text-align: left; font-size: 11px;
+      font-weight: 700; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.5px; border-bottom: 2px solid var(--border); white-space: nowrap;
+    }
+
+    td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f9fbff; }
+
+    .borrowed-status { background: #fef3c7; color: #92400e; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .returned-status { background: #d1fae5; color: #065f46; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+    .return-btn {
+      background: var(--green); color: white; border: none;
+      padding: 5px 12px; border-radius: 7px; font-size: 12px;
+      font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+
+    /* ── MOBILE RECORD CARDS ─────────────────────────────────── */
+    .record-cards { display: none; }
+
+    .record-card {
+      background: var(--card); border-radius: 14px; padding: 14px 16px;
+      margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border-left: 4px solid var(--border);
+    }
+
+    .record-card.borrowed-card { border-left-color: var(--gold); }
+    .record-card.returned-card { border-left-color: var(--green); }
+    .record-card.overdue { border-left-color: var(--red); background: #fff5f5; }
+
+    .rc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .rc-name { font-size: 14px; font-weight: 700; color: var(--navy); }
+    .rc-id { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+    .rc-tool { font-size: 13px; font-weight: 600; margin: 6px 0 4px; }
+
+    .rc-meta { display: flex; flex-wrap: wrap; gap: 5px; font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+    .rc-meta span { background: #f1f5f9; padding: 2px 8px; border-radius: 5px; }
+
+    .rc-footer { display: flex; justify-content: flex-end; align-items: center; }
+
+    /* ── REQUEST CARDS ───────────────────────────────────────── */
+    .req-card {
+      background: #f5f8ff; border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 14px; margin-bottom: 12px;
+    }
+
+    .req-card-header { margin-bottom: 10px; }
+    .req-card-name { font-size: 14px; font-weight: 700; color: var(--navy); }
+    .req-card-info { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .req-tool-row {
+      background: white; border-radius: 9px; padding: 10px;
+      margin-bottom: 8px; border: 1px solid var(--border);
+    }
+
+    .req-tool-name { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+
+    .req-tool-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .req-tool-fields label {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; display: block; margin-bottom: 3px;
+    }
+
+    .req-tool-fields input {
+      width: 100%; padding: 8px 10px; border-radius: 8px;
+      border: 1.5px solid var(--border); font-size: 12px;
+      font-family: inherit; -webkit-appearance: none;
+    }
+
+    .req-tool-fields input:focus { outline: none; border-color: var(--blue); }
+
+    .req-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+    .req-accept-btn, .req-reject-btn {
+      flex: 1; border: none; padding: 11px; border-radius: 10px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      font-family: inherit; touch-action: manipulation;
+    }
+
+    .req-accept-btn { background: var(--green); color: white; }
+    .req-reject-btn { background: var(--red); color: white; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .mob-header { display: flex; }
+      .mob-nav { display: block; }
+      .topbar { display: none; }
+      #clock { display: none; }
+
+      .main {
+        margin-left: 0;
+        padding: calc(56px + env(safe-area-inset-top, 0px) + 12px) 14px calc(var(--bottom-nav-h) + var(--safe-bottom) + 10px);
+      }
+
+      .dash-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .ds-val { font-size: 24px; }
+      .ds-icon { font-size: 22px; }
+      .ds-label { font-size: 10px; }
+      .dash-stat { padding: 12px; gap: 10px; }
+      .stat--green { grid-column: 1 / -1; }
+
+      .section-card { padding: 14px 15px; border-radius: 15px; }
+
+      .borrow-form { grid-template-columns: 1fr; gap: 10px; }
+      .submit-btn { font-size: 16px; padding: 14px; }
+
+      .table-wrap { display: none; }
+      .record-cards { display: block; }
+
+      .controls { gap: 8px; }
+      .controls input, .controls select { font-size: 14px; }
+
+      #mobileSyRow { display: flex; }
+    }
+
+    @media (max-width: 380px) {
+      .dash-stats { grid-template-columns: 1fr; }
+      .stat--green { grid-column: auto; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- DESKTOP SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <img src="images/marine.png" alt="AMT" class="sidebar-img">
+      <span>AMT System</span>
+    </div>
+    <ul>
+      <li class="active">🏠 Dashboard</li>
+      <li onclick="window.location='inventory.html'">📦 Inventory</li>
+      <li onclick="window.location='archives.html'">🗂️ Archives</li>
+      <li onclick="window.location='qrcode.html'">📱 QR Code</li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="sidebar-user-icon">👤</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="currentUser">Admin</div>
+        <button class="sidebar-logout" onclick="logout()">Log Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE HEADER -->
+  <div class="mob-header">
+    <div class="mob-header-inner">
+      <span class="mob-title">🔧 AMT System</span>
+      <div class="mob-header-right">
+        <span class="mob-sy-badge" id="syBadgeMobile">S.Y. —</span>
+        <button class="sidebar-logout" onclick="logout()">Log Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="mob-nav">
+    <div class="mob-nav-row">
+      <a class="mob-nav-item active" href="index.html">
+        <span class="ni">🏠</span>Dashboard
+      </a>
+      <a class="mob-nav-item" href="inventory.html">
+        <span class="ni">📦</span>Inventory
+      </a>
+      <a class="mob-nav-item" href="archives.html">
+        <span class="ni">🗂️</span>Archives
+      </a>
+      <a class="mob-nav-item" href="qrcode.html">
+        <span class="ni">📱</span>QR Code
+      </a>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- DESKTOP TOPBAR -->
+    <header class="topbar">
+      <div>
+        <h1>Tool Borrowing Dashboard</h1>
+        <div style="margin-top:4px">
+          <span class="sy-badge" id="syBadge">S.Y. —</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="new-sy-btn" onclick="newSchoolYear()">📅 New School Year</button>
+        <div id="clock"></div>
+      </div>
+    </header>
+
+    <!-- MOBILE SY ROW -->
+    <div id="mobileSyRow">
+      <span class="sy-badge" id="syBadge2" style="font-size:11px">S.Y. —</span>
+      <button class="new-sy-btn" style="font-size:12px;padding:7px 12px" onclick="newSchoolYear()">📅 New S.Y.</button>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="dash-stats">
+      <div class="dash-stat stat--navy">
+        <div class="ds-icon">📋</div>
+        <div>
+          <div class="ds-val" id="totalTools">0</div>
+          <div class="ds-label">Total Records</div>
+        </div>
+      </div>
+      <div class="dash-stat stat--gold">
+        <div class="ds-icon">🔧</div>
+        <div>
+          <div class="ds-val" id="borrowedCount">0</div>
+          <div class="ds-label">Borrowed</div>
+        </div>
+      </div>
+      <div class="dash-stat stat--green">
+        <div class="ds-icon">✅</div>
+        <div>
+          <div class="ds-val" id="returnedCount">0</div>
+          <div class="ds-label">Returned</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENDING REQUESTS -->
+    <div class="section-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h2 style="margin:0">📥 Requests <span class="pending-badge" id="pendingCount"></span></h2>
+        <button class="new-sy-btn" style="font-size:12px;padding:6px 12px;border-radius:8px" onclick="loadRequests()">↻ Refresh</button>
+      </div>
+      <div class="yr-tabs" id="reqYearTabs">
+        <button class="yr-tab yr-tab--active" onclick="setReqYear('all',this)">All</button>
+        <button class="yr-tab" onclick="setReqYear('1st Year',this)">1st Yr</button>
+        <button class="yr-tab" onclick="setReqYear('2nd Year',this)">2nd Yr</button>
+        <button class="yr-tab" onclick="setReqYear('3rd Year',this)">3rd Yr</button>
+        <button class="yr-tab" onclick="setReqYear('4th Year',this)">4th Yr</button>
+      </div>
+      <div id="requestsTable">
+        <p style="color:#94a3b8;font-size:13px">Loading requests…</p>
+      </div>
+    </div>
+
+    <!-- BORROW FORM -->
+    <div class="section-card">
+      <h2>➕ Borrow a Tool</h2>
+      <form id="borrowForm" class="borrow-form">
+        <div class="form-group">
+          <label>Student Name</label>
+          <input type="text" id="studentName" placeholder="e.g. Juan dela Cruz" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Student ID</label>
+          <input type="text" id="studentId" placeholder="e.g. 2024-00123" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Year Level</label>
+          <select id="yearLevel" required>
+            <option value="">— Select —</option>
+            <option>1st Year</option>
+            <option>2nd Year</option>
+            <option>3rd Year</option>
+            <option>4th Year</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tool Name</label>
+          <select id="toolName" required>
+            <option value="">— Select a tool —</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Date &amp; Time</label>
+          <input type="datetime-local" id="dateOut" required>
+        </div>
+        <button type="submit" class="submit-btn">🔧 Record Borrow</button>
+      </form>
+    </div>
+
+    <!-- RECORDS SECTION -->
+    <div class="section-card">
+      <h2>📄 Borrow Records</h2>
+
+      <div class="yr-tabs" id="recYearTabs" style="margin-bottom:12px">
+        <button class="yr-tab yr-tab--active" onclick="setRecYear('all',this)">All</button>
+        <button class="yr-tab" onclick="setRecYear('1st Year',this)">1st Yr</button>
+        <button class="yr-tab" onclick="setRecYear('2nd Year',this)">2nd Yr</button>
+        <button class="yr-tab" onclick="setRecYear('3rd Year',this)">3rd Yr</button>
+        <button class="yr-tab" onclick="setRecYear('4th Year',this)">4th Yr</button>
+      </div>
+
+      <div class="controls">
+        <input type="text" id="search" placeholder="🔍 Search student or tool…">
+        <select id="filter">
+          <option value="all">All Records</option>
+          <option value="borrowed">Borrowed</option>
+          <option value="returned">Returned</option>
+        </select>
+      </div>
+
+      <!-- Desktop table -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th><th>ID</th><th>Year</th>
+              <th>Tool</th><th>Date Out</th><th>Due Date</th>
+              <th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="toolList"></tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="record-cards" id="recordCards"></div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    /* ── Mobile patches injected after script.js ── */
+
+    // Patch render() to also fill mobile record cards
+    const _baseRender = window.render;
+    window.render = async function () {
+      const res     = await fetch(`${API}/records.php`, { credentials: 'include' });
+      const data    = await res.json();
+      const records = data.records || [];
+
+      document.getElementById('totalTools').textContent    = records.length;
+      document.getElementById('borrowedCount').textContent = records.filter(r => !r.returned).length;
+      document.getElementById('returnedCount').textContent = records.filter(r =>  r.returned).length;
+
+      const q = (document.getElementById('search').value || '').toLowerCase();
+      const f = document.getElementById('filter').value;
+
+      const filtered = records.filter(r => {
+        const ms = r.studentName.toLowerCase().includes(q) ||
+                   r.toolName.toLowerCase().includes(q) ||
+                   (r.section||'').toLowerCase().includes(q);
+        const mf = f==='all' || (f==='borrowed'&&!r.returned) || (f==='returned'&&r.returned);
+        const my = activeRecYear==='all' || (r.yearLevel||'')=== activeRecYear;
+        return ms && mf && my;
+      });
+
+      // Desktop table
+      const tbody = document.getElementById('toolList');
+      if (tbody) {
+        tbody.innerHTML = '';
+        if (!filtered.length) {
+          tbody.innerHTML = `<tr><td colspan="8" style="color:#94a3b8;padding:24px;text-align:center">No records found.</td></tr>`;
+        } else {
+          filtered.forEach(r => {
+            const now=new Date(), due=r.dueDate?new Date(r.dueDate):null;
+            const overdue = due && !r.returned && due < now;
+            const row = document.createElement('tr');
+            if (overdue) row.style.background = '#fff5f5';
+            row.innerHTML = `
+              <td>${r.studentName}</td><td>${r.studentId}</td><td>${r.yearLevel||'—'}</td>
+              <td><strong>${r.toolName}</strong></td>
+              <td>${new Date(r.dateOut).toLocaleString()}</td>
+              <td>${due?`<span style="color:${overdue?'#dc2626':'#16a34a'};font-weight:600">${overdue?'⚠️ ':''}${due.toLocaleString()}</span>`:'<span style="color:#94a3b8">—</span>'}</td>
+              <td><span class="${r.returned?'returned-status':'borrowed-status'}">${r.returned?'Returned':'Borrowed'}</span></td>
+              <td>${!r.returned?`<button class="return-btn" onclick="returnTool(${r.id})">✅ Return</button>`:''}</td>`;
+            tbody.appendChild(row);
+          });
+        }
+      }
+
+      // Mobile cards
+      const cards = document.getElementById('recordCards');
+      if (cards) {
+        if (!filtered.length) {
+          cards.innerHTML = `<div style="text-align:center;color:#94a3b8;padding:32px;font-size:14px">No records found.</div>`;
+        } else {
+          cards.innerHTML = filtered.map(r => {
+            const now=new Date(), due=r.dueDate?new Date(r.dueDate):null;
+            const overdue = due && !r.returned && due < now;
+            const cls = overdue?'overdue':r.returned?'returned-card':'borrowed-card';
+            return `
+              <div class="record-card ${cls}">
+                <div class="rc-header">
+                  <div>
+                    <div class="rc-name">${r.studentName}</div>
+                    <div class="rc-id">${r.studentId} · ${r.yearLevel||'—'}</div>
+                  </div>
+                  <span class="${r.returned?'returned-status':'borrowed-status'}">${r.returned?'Returned':'Borrowed'}</span>
+                </div>
+                <div class="rc-tool">🔧 ${r.toolName}</div>
+                <div class="rc-meta">
+                  <span>Out: ${new Date(r.dateOut).toLocaleDateString()}</span>
+                  ${due?`<span style="color:${overdue?'#dc2626':'#16a34a'}">${overdue?'⚠️ OVERDUE':'Due: '+due.toLocaleDateString()}</span>`:''}
+                </div>
+                <div class="rc-footer">
+                  ${!r.returned
+                    ? `<button class="return-btn" onclick="returnTool(${r.id})" style="width:100%;padding:11px;font-size:14px">✅ Mark as Returned</button>`
+                    : '<span style="color:#0d9e6e;font-size:13px;font-weight:600">✅ Returned</span>'}
+                </div>
+              </div>`;
+          }).join('');
+        }
+      }
+    };
+
+    // Patch renderRequestsTable to use mobile cards on small screens
+    window.renderRequestsTable = function () {
+      const container = document.getElementById('requestsTable');
+      if (!container) return;
+
+      const reqs = activeReqYear==='all' ? allRequests : allRequests.filter(r=>(r.year_level||'')===activeReqYear);
+
+      if (!reqs.length) {
+        container.innerHTML = '<p style="color:#94a3b8;font-size:13px;padding:8px 0">No pending requests.</p>';
+        return;
+      }
+
+      const groups = {};
+      reqs.forEach(r => {
+        if (!groups[r.student_id]) groups[r.student_id] = { info: r, items: [] };
+        groups[r.student_id].items.push(r);
+      });
+
+      const isMobile = window.innerWidth <= 768;
+
+      if (isMobile) {
+        container.innerHTML = Object.values(groups).map(g => {
+          const info = g.info;
+          const groupId = 'grp_' + info.student_id.replace(/[^a-z0-9]/gi,'_');
+          const ids = g.items.map(i=>i.id);
+          const toolRows = g.items.map(item=>`
+            <div class="req-tool-row">
+              <div class="req-tool-name">🔧 ${item.tool_name}</div>
+              <div class="req-tool-fields">
+                <div><label>Qty to Give</label><input type="number" id="aqty-${item.id}" value="${item.quantity||1}" min="1"></div>
+                <div><label>Return Deadline</label><input type="datetime-local" id="due-${item.id}"></div>
+              </div>
+            </div>`).join('');
+          return `
+            <div class="req-card" id="${groupId}">
+              <div class="req-card-header">
+                <div class="req-card-name">${info.student_name}</div>
+                <div class="req-card-info">${info.student_id} · ${info.year_level||'—'} · ${info.semester||'1st Semester'}</div>
+                <div class="req-card-info" style="color:#1a56db">${info.student_email}</div>
+              </div>
+              ${toolRows}
+              <div class="req-actions">
+                <button class="req-accept-btn" onclick="confirmAccept('${groupId}',${JSON.stringify(ids)})">✅ Accept</button>
+                <button class="req-reject-btn" onclick="handleGroupRequest('${groupId}',${JSON.stringify(ids)},'rejected')">❌ Reject</button>
+              </div>
+            </div>`;
+        }).join('');
+      } else {
+        // Desktop table (unchanged from script.js)
+        let rows = '';
+        Object.values(groups).forEach(g => {
+          const info = g.info;
+          const groupId = 'grp_' + info.student_id.replace(/[^a-z0-9]/gi,'_');
+          const ids = g.items.map(i=>i.id);
+          const toolRows = g.items.map(item=>`
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <td style="padding:5px 8px;font-size:12px;font-weight:600;white-space:nowrap">🔧 ${item.tool_name}</td>
+              <td style="padding:5px 8px;font-size:12px;text-align:center"><span style="background:#f1f5f9;padding:1px 8px;border-radius:5px;font-weight:600">${item.quantity||1}</span></td>
+              <td style="padding:5px 8px"><input type="number" id="aqty-${item.id}" value="${item.quantity||1}" min="1" style="width:55px;padding:3px 6px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;text-align:center"></td>
+              <td style="padding:5px 8px"><input type="datetime-local" id="due-${item.id}" style="padding:3px 6px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;width:160px"></td>
+            </tr>`).join('');
+          rows += `
+            <tr id="${groupId}" style="border-bottom:2px solid #e2e8f0;vertical-align:top">
+              <td style="padding:12px;font-size:13px;font-weight:600;white-space:nowrap">${info.student_name}<br><span style="font-size:11px;color:#94a3b8;font-weight:400">${info.student_id}</span></td>
+              <td style="padding:12px;font-size:13px;color:#475569;white-space:nowrap">${info.student_email}</td>
+              <td style="padding:12px;font-size:13px;color:#475569;white-space:nowrap">${info.year_level||'—'}</td>
+              <td style="padding:12px;font-size:13px;color:#475569;white-space:nowrap">${info.semester||'1st Semester'}</td>
+              <td style="padding:8px 12px">
+                <table style="border-collapse:collapse;width:100%">
+                  <thead><tr style="border-bottom:1px solid #e2e8f0">
+                    <th style="padding:3px 8px;font-size:10px;color:#94a3b8;text-align:left;font-weight:600">Tool</th>
+                    <th style="padding:3px 8px;font-size:10px;color:#94a3b8;text-align:center;font-weight:600">Req'd</th>
+                    <th style="padding:3px 8px;font-size:10px;color:#94a3b8;text-align:left;font-weight:600">Qty to Give</th>
+                    <th style="padding:3px 8px;font-size:10px;color:#94a3b8;text-align:left;font-weight:600">Due</th>
+                  </tr></thead>
+                  <tbody>${toolRows}</tbody>
+                </table>
+              </td>
+              <td style="padding:12px;white-space:nowrap;vertical-align:middle">
+                <button onclick="confirmAccept('${groupId}',${JSON.stringify(ids)})" style="background:#16a34a;color:white;border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:5px;display:block;width:100%">✅ Accept</button>
+                <button onclick="handleGroupRequest('${groupId}',${JSON.stringify(ids)},'rejected')" style="background:#dc2626;color:white;border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;display:block;width:100%">❌ Reject</button>
+              </td>
+            </tr>`;
+        });
+        container.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:700px">
+          <thead><tr style="background:#f8fafc">
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748b;border-bottom:2px solid #e2e8f0">Name</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748b;border-bottom:2px solid #e2e8f0">Email</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748b;border-bottom:2px solid #e2e8f0">Year</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748b;border-bottom:2px solid #e2e8f0">Semester</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748b;border-bottom:2px solid #e2e8f0">Tools</th>
+            <th style="padding:10px 12px;text-align:left;font-size:12px;color:#64748b;border-bottom:2px solid #e2e8f0">Action</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>`;
+      }
+    };
+
+    // Sync SY badges including mobile
+    const _origDomReady = document.addEventListener;
+    const _patchSY = async () => {
+      const syRes  = await fetch(`${API}/schoolyear.php`, { credentials: 'include' });
+      const syData = await syRes.json();
+      ['syBadge','syBadge2','syBadgeMobile'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && syData.sy) el.textContent = 'S.Y. ' + syData.sy;
+      });
+    };
+
+    // Re-run SY sync after DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(_patchSY, 600);
+    });
+
+    window.addEventListener('resize', () => {
+      if (allRequests && allRequests.length) renderRequestsTable();
+    });
+  </script>
+</body>
+</html>

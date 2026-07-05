@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>QR Code — AMT System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0c1f3f;
+      --blue: #1a56db;
+      --gold: #e8a020;
+      --bg: #eef2f9;
+      --card: #ffffff;
+      --text: #0c1f3f;
+      --muted: #5e738a;
+      --border: #dde5f0;
+      --bottom-nav-h: 68px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: 230px; height: 100vh;
+      background: var(--navy); display: flex; flex-direction: column;
+      z-index: 100; box-shadow: 4px 0 20px rgba(0,0,0,0.18);
+    }
+
+    .sidebar-logo { display: flex; align-items: center; gap: 12px; padding: 22px 18px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .sidebar-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .sidebar-logo span { color: white; font-weight: 700; font-size: 15px; }
+    .sidebar ul { list-style: none; padding: 10px 0; flex: 1; }
+    .sidebar ul li { padding: 13px 20px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; cursor: pointer; border-left: 3px solid transparent; transition: all 0.17s; }
+    .sidebar ul li:hover { color: white; background: rgba(255,255,255,0.07); }
+    .sidebar ul li.active { color: white; border-left-color: var(--gold); background: rgba(255,255,255,0.1); }
+    .sidebar-user { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 10px; }
+    .sidebar-user-icon { font-size: 20px; background: rgba(255,255,255,0.1); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .sidebar-user-name { color: white; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .sidebar-logout { background: rgba(220,38,38,0.18); color: #fca5a5; border: 1px solid rgba(220,38,38,0.3); padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+    /* ── MOBILE HEADER ───────────────────────────────────────── */
+    .mob-header {
+      display: none; position: fixed; top: 0; left: 0; right: 0;
+      background: var(--navy); z-index: 200;
+      padding: 0 16px;
+      padding-top: env(safe-area-inset-top, 0px);
+      height: calc(56px + env(safe-area-inset-top, 0px));
+      align-items: flex-end; justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .mob-header-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; padding-bottom: 12px; }
+    .mob-title { color: white; font-size: 16px; font-weight: 700; }
+
+    /* ── MOBILE BOTTOM NAV ───────────────────────────────────── */
+    .mob-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--navy); z-index: 200;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    .mob-nav-row { display: flex; justify-content: space-around; }
+
+    .mob-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 600;
+      padding: 10px 0 8px; flex: 1; cursor: pointer; text-decoration: none; transition: color 0.15s;
+    }
+
+    .mob-nav-item .ni { font-size: 22px; }
+    .mob-nav-item.active { color: var(--gold); }
+
+    /* ── MAIN ────────────────────────────────────────────────── */
+    .main { margin-left: 230px; padding: 24px; min-height: 100vh; }
+
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: var(--navy); }
+    #clock { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+    /* ── QR CARD ─────────────────────────────────────────────── */
+    .qr-card {
+      background: var(--card); border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 28px; max-width: 500px;
+    }
+
+    .qr-card h2 { font-size: 18px; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+
+    .qr-desc { font-size: 13px; color: var(--muted); margin-bottom: 22px; line-height: 1.5; }
+
+    /* QR image container */
+    .qr-display {
+      display: flex; flex-direction: column; align-items: center;
+      margin-bottom: 20px;
+    }
+
+    #qrImage img {
+      display: block; margin: 0 auto;
+      border: 10px solid white; border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.14);
+    }
+
+    /* IP input section */
+    .ip-section {
+      background: #fff7ed; border: 1.5px solid #fed7aa;
+      border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;
+    }
+
+    .ip-section p { font-size: 13px; color: #c2410c; margin-bottom: 10px; line-height: 1.5; }
+
+    .ip-input-row { display: flex; gap: 8px; }
+
+    .ip-input-row input {
+      flex: 1; padding: 10px 13px;
+      border: 1.5px solid #fed7aa; border-radius: 9px;
+      font-size: 14px; font-family: inherit; color: var(--text);
+      background: white; outline: none;
+      -webkit-appearance: none;
+    }
+
+    .ip-input-row input:focus { border-color: var(--blue); }
+
+    .ip-input-row button {
+      background: var(--navy); color: white; border: none;
+      padding: 10px 16px; border-radius: 9px; font-size: 13px;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+      white-space: nowrap; touch-action: manipulation;
+    }
+
+    /* URL display */
+    .qr-url {
+      font-size: 12px; color: var(--muted);
+      background: #f5f8ff; border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 10px 14px;
+      word-break: break-all; margin-bottom: 16px;
+      font-family: 'JetBrains Mono', monospace; line-height: 1.5;
+    }
+
+    /* Action buttons */
+    .qr-btns { display: flex; gap: 10px; margin-bottom: 16px; }
+
+    .qr-btn {
+      flex: 1; padding: 12px; border-radius: 10px; border: none;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      font-family: inherit; touch-action: manipulation;
+      transition: opacity 0.15s;
+    }
+
+    .qr-btn:active { opacity: 0.8; }
+    .qr-btn--print { background: var(--navy); color: white; }
+    .qr-btn--copy  { background: #f1f5f9; color: var(--muted); border: 1.5px solid var(--border); }
+
+    /* Info note */
+    .ip-note {
+      background: #f0f9ff; border: 1.5px solid #bae6fd;
+      border-radius: 10px; padding: 12px 14px;
+      font-size: 12px; color: #0369a1; line-height: 1.5;
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .mob-header { display: flex; }
+      .mob-nav { display: block; }
+      .topbar { display: none; }
+
+      .main {
+        margin-left: 0;
+        padding: calc(56px + env(safe-area-inset-top, 0px) + 16px) 14px calc(var(--bottom-nav-h) + var(--safe-bottom) + 14px);
+        display: flex; flex-direction: column; align-items: stretch;
+      }
+
+      .qr-card { max-width: 100%; border-radius: 18px; padding: 22px 18px; }
+      .qr-card h2 { font-size: 17px; }
+
+      #qrImage img { width: 200px; height: 200px; }
+
+      .qr-btns { flex-direction: column; }
+      .qr-btn { padding: 14px; font-size: 15px; }
+    }
+
+    @media print {
+      .sidebar, .mob-header, .mob-nav, .topbar, .qr-btns, .ip-section, .ip-note { display: none !important; }
+      body { background: white; }
+      .main { margin: 0; padding: 0; }
+      .qr-card { box-shadow: none; max-width: 100%; }
+      #qrImage img { width: 280px; height: 280px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- DESKTOP SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <img src="images/AMT.jpg" alt="AMT" class="sidebar-img">
+      <span>AMT System</span>
+    </div>
+    <ul>
+      <li onclick="window.location='index.html'">🏠 Dashboard</li>
+      <li onclick="window.location='inventory.html'">📦 Inventory</li>
+      <li onclick="window.location='archives.html'">🗂️ Archives</li>
+      <li class="active">📱 QR Code</li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="sidebar-user-icon">👤</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="currentUser">Admin</div>
+        <button class="sidebar-logout" onclick="window.logout()">Log Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE HEADER -->
+  <div class="mob-header">
+    <div class="mob-header-inner">
+      <span class="mob-title">📱 QR Code</span>
+      <button class="sidebar-logout" onclick="window.logout()">Log Out</button>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="mob-nav">
+    <div class="mob-nav-row">
+      <a class="mob-nav-item" href="index.html"><span class="ni">🏠</span>Dashboard</a>
+      <a class="mob-nav-item" href="inventory.html"><span class="ni">📦</span>Inventory</a>
+      <a class="mob-nav-item" href="archives.html"><span class="ni">🗂️</span>Archives</a>
+      <a class="mob-nav-item active" href="qrcode.html"><span class="ni">📱</span>QR Code</a>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <h1>QR Code Generator</h1>
+      <div id="clock"></div>
+    </header>
+
+    <div class="qr-card">
+      <h2>📲 Student Borrow Request QR</h2>
+      <p class="qr-desc">Students scan this QR code to open the borrow request form on their phone. Their requests will appear on the Dashboard.</p>
+
+      <!-- IP input (shown only when on localhost) -->
+      <div id="ipSection" class="ip-section" style="display:none">
+        <p>⚠️ The current URL uses <strong>localhost</strong> — phones on your network can't reach it.<br>
+           Enter your computer's local IP address (run <code>ipconfig</code> in CMD or <code>ifconfig</code> on Mac):</p>
+        <div class="ip-input-row">
+          <input type="text" id="ipField" placeholder="e.g. 192.168.1.5" inputmode="decimal">
+          <button onclick="updateIP()">Generate</button>
+        </div>
+      </div>
+
+      <!-- QR Code image -->
+      <div class="qr-display">
+        <div id="qrImage"></div>
+      </div>
+
+      <!-- URL display -->
+      <div class="qr-url" id="qrUrl">Generating…</div>
+
+      <!-- Action buttons -->
+      <div class="qr-btns">
+        <button class="qr-btn qr-btn--print" onclick="window.print()">🖨️ Print QR Code</button>
+        <button class="qr-btn qr-btn--copy" onclick="copyUrl()">📋 Copy Link</button>
+      </div>
+
+      <div class="ip-note">
+        💡 <strong>Students must be on the same Wi-Fi network</strong> as this computer to access the form. If they can't connect, double-check the IP address and firewall settings.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'api';
+
+    async function checkAuth() {
+      try {
+        const res  = await fetch(`${API}/me.php`, { credentials: 'include' });
+        const data = await res.json();
+        if (!data.ok) { window.location.href = 'login.html'; return; }
+        document.getElementById('currentUser').textContent = data.username || data.email;
+      } catch { window.location.href = 'login.html'; }
+    }
+    checkAuth();
+
+    window.logout = async function () {
+      await fetch(`${API}/logout.php`, { method: 'POST', credentials: 'include' });
+      window.location.href = 'login.html';
+    };
+
+    function updateClock() {
+      const el = document.getElementById('clock');
+      if (el) el.innerText = new Date().toLocaleString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Build the request URL
+    let requestUrl = window.location.origin +
+      window.location.pathname.replace('qrcode.html', '') + 'request.html';
+
+    if (requestUrl.includes('localhost') || requestUrl.includes('127.0.0.1')) {
+      document.getElementById('ipSection').style.display = 'block';
+      document.getElementById('qrUrl').textContent = 'Enter your IP address above to generate.';
+    } else {
+      generateQR(requestUrl);
+    }
+
+    function generateQR(url) {
+      document.getElementById('qrUrl').textContent = url;
+      const encoded = encodeURIComponent(url);
+      const img = document.createElement('img');
+      const size = window.innerWidth <= 768 ? 200 : 240;
+      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}`;
+      img.alt = 'QR Code';
+      img.width  = size;
+      img.height = size;
+      const container = document.getElementById('qrImage');
+      container.innerHTML = '';
+      container.appendChild(img);
+    }
+
+    window.updateIP = function () {
+      const ip = document.getElementById('ipField').value.trim();
+      if (!ip) return;
+      const base = window.location.pathname.replace('qrcode.html', '');
+      const url  = `http://${ip}${base}request.html`;
+      generateQR(url);
+      document.getElementById('ipSection').style.display = 'none';
+    };
+
+    function copyUrl() {
+      const url = document.getElementById('qrUrl').textContent;
+      if (!url || url.includes('Enter your IP')) { alert('Generate a QR code first.'); return; }
+      navigator.clipboard.writeText(url)
+        .then(() => alert('Link copied to clipboard!'))
+        .catch(() => {
+          // Fallback for older mobile browsers
+          const ta = document.createElement('textarea');
+          ta.value = url; document.body.appendChild(ta);
+          ta.select(); document.execCommand('copy');
+          document.body.removeChild(ta);
+          alert('Link copied!');
+        });
+    }
+  </script>
+
+</body>
+</html>

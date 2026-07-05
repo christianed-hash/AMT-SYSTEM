@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Archives — AMT System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0c1f3f;
+      --blue: #1a56db;
+      --gold: #e8a020;
+      --green: #0d9e6e;
+      --red: #8b0000;
+      --bg: #eef2f9;
+      --card: #ffffff;
+      --text: #0c1f3f;
+      --muted: #5e738a;
+      --border: #dde5f0;
+      --bottom-nav-h: 68px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: 230px; height: 100vh;
+      background: var(--navy); display: flex; flex-direction: column;
+      z-index: 100; box-shadow: 4px 0 20px rgba(0,0,0,0.18);
+    }
+
+    .sidebar-logo { display: flex; align-items: center; gap: 12px; padding: 22px 18px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .sidebar-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .sidebar-logo span { color: white; font-weight: 700; font-size: 15px; }
+    .sidebar ul { list-style: none; padding: 10px 0; flex: 1; }
+    .sidebar ul li { padding: 13px 20px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; cursor: pointer; border-left: 3px solid transparent; transition: all 0.17s; }
+    .sidebar ul li:hover { color: white; background: rgba(255,255,255,0.07); }
+    .sidebar ul li.active { color: white; border-left-color: var(--gold); background: rgba(255,255,255,0.1); }
+    .sidebar-user { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 10px; }
+    .sidebar-user-icon { font-size: 20px; background: rgba(255,255,255,0.1); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .sidebar-user-name { color: white; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .sidebar-logout { background: rgba(220,38,38,0.18); color: #fca5a5; border: 1px solid rgba(220,38,38,0.3); padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+    /* ── MOBILE HEADER ───────────────────────────────────────── */
+    .mob-header {
+      display: none; position: fixed; top: 0; left: 0; right: 0;
+      background: var(--navy); z-index: 200;
+      padding: 0 16px;
+      padding-top: env(safe-area-inset-top, 0px);
+      height: calc(56px + env(safe-area-inset-top, 0px));
+      align-items: flex-end; justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .mob-header-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; padding-bottom: 12px; }
+    .mob-title { color: white; font-size: 16px; font-weight: 700; }
+
+    /* ── MOBILE BOTTOM NAV ───────────────────────────────────── */
+    .mob-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--navy); z-index: 200;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    .mob-nav-row { display: flex; justify-content: space-around; }
+
+    .mob-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 600;
+      padding: 10px 0 8px; flex: 1; cursor: pointer; text-decoration: none; transition: color 0.15s;
+    }
+
+    .mob-nav-item .ni { font-size: 22px; }
+    .mob-nav-item.active { color: var(--gold); }
+
+    /* ── MAIN ────────────────────────────────────────────────── */
+    .main { margin-left: 230px; padding: 24px; min-height: 100vh; }
+
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
+    .topbar-left h1 { font-size: 22px; font-weight: 800; color: var(--navy); }
+    .sy-badge { font-size: 12px; font-weight: 700; background: var(--navy); color: white; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-top: 4px; }
+    #clock { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+    /* ── ARCH TOOLBAR ────────────────────────────────────────── */
+    .arch-toolbar-wrap {
+      background: var(--card); border-radius: 16px;
+      padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+    }
+
+    .arch-toolbar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+
+    .arch-label { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+
+    .arch-toolbar select {
+      flex: 1; padding: 10px 13px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 14px; font-family: inherit;
+      color: var(--text); background: #f5f8ff; outline: none;
+      min-width: 200px; -webkit-appearance: none;
+    }
+
+    .arch-toolbar select:focus { border-color: var(--blue); }
+
+    .arch-count { font-size: 12px; color: var(--muted); font-weight: 600; }
+
+    /* ── CONTROLS ────────────────────────────────────────────── */
+    .arch-controls {
+      display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+    }
+
+    .arch-controls input, .arch-controls select {
+      padding: 10px 13px; border-radius: 10px;
+      border: 1.5px solid var(--border); font-size: 14px;
+      font-family: inherit; color: var(--text); background: white;
+      -webkit-appearance: none;
+    }
+
+    .arch-controls input { flex: 1; min-width: 150px; }
+    .arch-controls input:focus, .arch-controls select:focus { outline: none; border-color: var(--blue); }
+
+    /* ── CONTENT AREA ────────────────────────────────────────── */
+    #archContent { margin-top: 8px; }
+
+    /* Semester block */
+    .sem-block { margin-bottom: 28px; }
+
+    .sem-title {
+      font-size: 14px; font-weight: 700; color: var(--red);
+      padding: 9px 14px; background: #fff5f5;
+      border-left: 4px solid var(--red); border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    /* Desktop table */
+    .arch-table-wrap {
+      background: var(--card); border-radius: 14px;
+      overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow-x: auto;
+    }
+
+    .arch-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+    .arch-table thead tr { background: #f5f8ff; }
+    .arch-table th { padding: 11px 13px; text-align: left; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border); white-space: nowrap; }
+    .arch-table td { padding: 10px 13px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .arch-table tr:last-child td { border-bottom: none; }
+    .arch-table tr:hover td { background: #f9fbff; }
+
+    /* Mobile archive cards */
+    .arch-cards { display: none; }
+
+    .arch-card {
+      background: var(--card); border-radius: 14px; padding: 13px 15px;
+      margin-bottom: 9px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border-left: 4px solid var(--border);
+    }
+
+    .arch-card.ac-borrowed { border-left-color: var(--gold); }
+    .arch-card.ac-returned { border-left-color: var(--green); }
+
+    .ac-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .ac-name { font-size: 14px; font-weight: 700; color: var(--navy); }
+    .ac-id { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
+    .ac-tool { font-size: 13px; font-weight: 600; margin: 5px 0 4px; }
+    .ac-meta { font-size: 11px; color: var(--muted); }
+
+    /* Status badges */
+    .borrowed-status { background: #fef3c7; color: #92400e; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .returned-status { background: #d1fae5; color: #065f46; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+    /* Empty / none states */
+    .inv-no-results { text-align: center; padding: 48px; color: var(--muted); font-size: 15px; }
+    .arch-none { background: var(--card); border-radius: 16px; padding: 32px; text-align: center; color: var(--muted); font-size: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .mob-header { display: flex; }
+      .mob-nav { display: block; }
+      .topbar { display: none; }
+
+      .main {
+        margin-left: 0;
+        padding: calc(56px + env(safe-area-inset-top, 0px) + 12px) 14px calc(var(--bottom-nav-h) + var(--safe-bottom) + 10px);
+      }
+
+      .arch-toolbar-wrap { padding: 14px 15px; border-radius: 14px; }
+      .arch-toolbar select { min-width: unset; font-size: 14px; }
+
+      .arch-table-wrap { display: none; }
+      .arch-cards { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- DESKTOP SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <img src="images/AMT.jpg" alt="AMT" class="sidebar-img">
+      <span>AMT System</span>
+    </div>
+    <ul>
+      <li onclick="window.location='index.html'">🏠 Dashboard</li>
+      <li onclick="window.location='inventory.html'">📦 Inventory</li>
+      <li class="active">🗂️ Archives</li>
+      <li onclick="window.location='qrcode.html'">📱 QR Code</li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="sidebar-user-icon">👤</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="currentUser">Admin</div>
+        <button class="sidebar-logout" onclick="window.logout()">Log Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE HEADER -->
+  <div class="mob-header">
+    <div class="mob-header-inner">
+      <span class="mob-title">🗂️ Archives</span>
+      <button class="sidebar-logout" onclick="window.logout()">Log Out</button>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="mob-nav">
+    <div class="mob-nav-row">
+      <a class="mob-nav-item" href="index.html"><span class="ni">🏠</span>Dashboard</a>
+      <a class="mob-nav-item" href="inventory.html"><span class="ni">📦</span>Inventory</a>
+      <a class="mob-nav-item active" href="archives.html"><span class="ni">🗂️</span>Archives</a>
+      <a class="mob-nav-item" href="qrcode.html"><span class="ni">📱</span>QR Code</a>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1>Archives</h1>
+        <span class="sy-badge">Past School Year Records</span>
+      </div>
+      <div id="clock"></div>
+    </header>
+
+    <!-- Toolbar card -->
+    <div class="arch-toolbar-wrap">
+      <div class="arch-toolbar">
+        <label class="arch-label">📅 School Year:</label>
+        <select id="sySelect" onchange="window.loadArchive()">
+          <option value="">— Choose a school year —</option>
+        </select>
+        <span class="arch-count" id="archCount"></span>
+      </div>
+      <div class="arch-controls" id="archControls" style="display:none">
+        <input type="text" id="archSearch" placeholder="🔍 Search student or tool…" oninput="window.renderArchive()">
+        <select id="archFilter" onchange="window.renderArchive()">
+          <option value="all">All Records</option>
+          <option value="borrowed">Borrowed</option>
+          <option value="returned">Returned</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Records content -->
+    <div id="archContent"></div>
+
+    <!-- Empty state -->
+    <div class="inv-no-results" id="archEmpty" style="display:none">
+      No records found for this school year.
+    </div>
+
+    <!-- No archives yet -->
+    <div class="arch-none" id="archNone">
+      No archived school years yet.<br>Use the <strong>New School Year</strong> button on the Dashboard to archive records.
+    </div>
+
+  </div>
+
+  <script>
+    const API = 'api';
+
+    async function checkAuth() {
+      try {
+        const res  = await fetch(`${API}/me.php`, { credentials: 'include' });
+        const data = await res.json();
+        if (!data.ok) { window.location.href = 'login.html'; return; }
+        document.getElementById('currentUser').textContent = data.username || data.email;
+        loadYears();
+      } catch { window.location.href = 'login.html'; }
+    }
+    checkAuth();
+
+    window.logout = async function () {
+      await fetch(`${API}/logout.php`, { method: 'POST', credentials: 'include' });
+      window.location.href = 'login.html';
+    };
+
+    function updateClock() {
+      const el = document.getElementById('clock');
+      if (el) el.innerText = new Date().toLocaleString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    let currentRecords = [];
+
+    async function loadYears() {
+      const res      = await fetch(`${API}/archives.php`, { credentials: 'include' });
+      const data     = await res.json();
+      const archives = data.archives || [];
+      const sySelect = document.getElementById('sySelect');
+      const noneMsg  = document.getElementById('archNone');
+
+      if (!archives.length) { noneMsg.style.display = 'block'; return; }
+      noneMsg.style.display = 'none';
+
+      archives.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.sy;
+        opt.textContent = `S.Y. ${a.sy} (${a.count} records)`;
+        sySelect.appendChild(opt);
+      });
+    }
+
+    window.loadArchive = async function () {
+      const sy = document.getElementById('sySelect').value;
+      if (!sy) return;
+      const res  = await fetch(`${API}/archives.php?sy=${encodeURIComponent(sy)}`, { credentials: 'include' });
+      const data = await res.json();
+      currentRecords = data.records || [];
+      document.getElementById('archControls').style.display = 'flex';
+      document.getElementById('archCount').textContent = currentRecords.length + ' total records';
+      window.renderArchive();
+    };
+
+    window.renderArchive = function () {
+      const q = document.getElementById('archSearch').value.toLowerCase();
+      const f = document.getElementById('archFilter').value;
+
+      const filtered = currentRecords.filter(r => {
+        const ms =
+          r.studentName.toLowerCase().includes(q) ||
+          r.toolName.toLowerCase().includes(q) ||
+          (r.section || '').toLowerCase().includes(q);
+        const mf =
+          f === 'all' ||
+          (f === 'borrowed' && !r.returned) ||
+          (f === 'returned' && r.returned);
+        return ms && mf;
+      });
+
+      const content = document.getElementById('archContent');
+      const empty   = document.getElementById('archEmpty');
+      const isMobile = window.innerWidth <= 768;
+
+      if (!filtered.length) {
+        content.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+
+      const semesters = ['1st Semester', '2nd Semester'];
+      let html = '';
+
+      semesters.forEach(sem => {
+        const semRecords = filtered.filter(r => (r.semester || '1st Semester') === sem);
+        if (!semRecords.length) return;
+
+        if (isMobile) {
+          // Mobile card layout
+          html += `
+            <div class="sem-block">
+              <div class="sem-title">📚 ${sem} — ${semRecords.length} record${semRecords.length !== 1 ? 's' : ''}</div>
+              <div class="arch-cards" style="display:block">
+                ${semRecords.map(r => {
+                  const cls = r.returned ? 'ac-returned' : 'ac-borrowed';
+                  return `
+                    <div class="arch-card ${cls}">
+                      <div class="ac-header">
+                        <div>
+                          <div class="ac-name">${r.studentName}</div>
+                          <div class="ac-id">${r.studentId} · ${r.yearLevel || '—'}</div>
+                        </div>
+                        <span class="${r.returned ? 'returned-status' : 'borrowed-status'}">${r.returned ? 'Returned' : 'Borrowed'}</span>
+                      </div>
+                      <div class="ac-tool">🔧 ${r.toolName}</div>
+                      <div class="ac-meta">Out: ${new Date(r.dateOut).toLocaleString()}</div>
+                    </div>`;
+                }).join('')}
+              </div>
+            </div>`;
+        } else {
+          // Desktop table layout
+          html += `
+            <div class="sem-block">
+              <div class="sem-title">📚 ${sem} — ${semRecords.length} record${semRecords.length !== 1 ? 's' : ''}</div>
+              <div class="arch-table-wrap">
+                <table class="arch-table">
+                  <thead>
+                    <tr>
+                      <th>Student</th>
+                      <th>ID</th>
+                      <th>Year Level</th>
+                      <th>Tool</th>
+                      <th>Date Out</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${semRecords.map(r => `
+                      <tr>
+                        <td>${r.studentName}</td>
+                        <td>${r.studentId}</td>
+                        <td>${r.yearLevel || '—'}</td>
+                        <td><strong>${r.toolName}</strong></td>
+                        <td>${new Date(r.dateOut).toLocaleString()}</td>
+                        <td><span class="${r.returned ? 'returned-status' : 'borrowed-status'}">${r.returned ? 'Returned' : 'Borrowed'}</span></td>
+                      </tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>`;
+        }
+      });
+
+      content.innerHTML = html;
+    };
+
+    window.addEventListener('resize', () => {
+      if (currentRecords.length) window.renderArchive();
+    });
+  </script>
+
+</body>
+</html>

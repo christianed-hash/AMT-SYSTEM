@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Inventory — AMT System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0c1f3f;
+      --navy2: #16325c;
+      --blue: #1a56db;
+      --gold: #e8a020;
+      --green: #0d9e6e;
+      --red: #dc2626;
+      --bg: #eef2f9;
+      --card: #ffffff;
+      --text: #0c1f3f;
+      --muted: #5e738a;
+      --border: #dde5f0;
+      --bottom-nav-h: 68px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: 230px; height: 100vh;
+      background: var(--navy);
+      display: flex; flex-direction: column;
+      z-index: 100;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.18);
+    }
+
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 12px;
+      padding: 22px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .sidebar-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .sidebar-logo span { color: white; font-weight: 700; font-size: 15px; }
+    .sidebar ul { list-style: none; padding: 10px 0; flex: 1; }
+    .sidebar ul li { padding: 13px 20px; color: rgba(255,255,255,0.6); font-size: 14px; font-weight: 500; cursor: pointer; border-left: 3px solid transparent; transition: all 0.17s; }
+    .sidebar ul li:hover { color: white; background: rgba(255,255,255,0.07); }
+    .sidebar ul li.active { color: white; border-left-color: var(--gold); background: rgba(255,255,255,0.1); }
+    .sidebar-user { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 10px; }
+    .sidebar-user-icon { font-size: 20px; background: rgba(255,255,255,0.1); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .sidebar-user-name { color: white; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .sidebar-logout { background: rgba(220,38,38,0.18); color: #fca5a5; border: 1px solid rgba(220,38,38,0.3); padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+    /* ── MOBILE HEADER ───────────────────────────────────────── */
+    .mob-header {
+      display: none; position: fixed; top: 0; left: 0; right: 0;
+      background: var(--navy); z-index: 200;
+      padding: 0 16px;
+      padding-top: env(safe-area-inset-top, 0px);
+      height: calc(56px + env(safe-area-inset-top, 0px));
+      align-items: flex-end; justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .mob-header-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; padding-bottom: 12px; }
+    .mob-title { color: white; font-size: 16px; font-weight: 700; }
+
+    /* ── MOBILE BOTTOM NAV ───────────────────────────────────── */
+    .mob-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--navy); z-index: 200;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    .mob-nav-row { display: flex; justify-content: space-around; }
+
+    .mob-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 600;
+      padding: 10px 0 8px; flex: 1; cursor: pointer; text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .mob-nav-item .ni { font-size: 22px; }
+    .mob-nav-item.active { color: var(--gold); }
+
+    /* ── MAIN ────────────────────────────────────────────────── */
+    .main { margin-left: 230px; padding: 24px; min-height: 100vh; }
+
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: var(--navy); }
+    #clock { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+    /* ── STATS ───────────────────────────────────────────────── */
+    .inv-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+
+    .inv-stat {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--card); border-radius: 14px; padding: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .inv-stat-icon { font-size: 24px; }
+    .inv-stat-val { font-size: 26px; font-weight: 800; line-height: 1; }
+    .inv-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .inv-stat--blue .inv-stat-val { color: var(--blue); }
+    .inv-stat--indigo .inv-stat-val { color: #4f46e5; }
+    .inv-stat--gold .inv-stat-val { color: var(--gold); }
+    .inv-stat--green .inv-stat-val { color: var(--green); }
+
+    /* ── TOOLBAR ─────────────────────────────────────────────── */
+    .inv-toolbar {
+      display: flex; gap: 10px; align-items: center;
+      margin-bottom: 18px; flex-wrap: wrap;
+    }
+
+    .inv-search-wrap {
+      display: flex; align-items: center; background: white;
+      border: 1.5px solid var(--border); border-radius: 11px;
+      padding: 0 12px; flex: 1; min-width: 180px;
+    }
+
+    .inv-search-icon { font-size: 16px; margin-right: 6px; }
+
+    .inv-search-wrap input {
+      border: none; outline: none; padding: 11px 0;
+      font-size: 14px; font-family: inherit; width: 100%;
+    }
+
+    .inv-filter-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .inv-filter-btn {
+      padding: 8px 14px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: white;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      color: var(--muted); font-family: inherit; transition: all 0.14s;
+      white-space: nowrap; touch-action: manipulation;
+    }
+
+    .inv-filter-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .inv-filter-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+
+    /* ── SECTION TITLE ───────────────────────────────────────── */
+    .inv-section-title {
+      font-size: 12px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin: 20px 0 10px; padding-bottom: 6px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    /* ── GRID ────────────────────────────────────────────────── */
+    .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+
+    /* ── CARDS ───────────────────────────────────────────────── */
+    .inv-card {
+      background: var(--card); border-radius: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .inv-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.1); }
+    .inv-card--out { opacity: 0.6; }
+
+    .inv-card-img-wrap {
+      width: 100%; height: 130px; background: #f3f6fb;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+
+    .inv-card-img { width: 100%; height: 100%; object-fit: cover; }
+    .inv-card-img-placeholder { font-size: 40px; }
+
+    .inv-card-body { padding: 12px 13px; }
+    .inv-card-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+    .inv-card-meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+
+    .inv-badge {
+      display: inline-block; padding: 3px 10px;
+      border-radius: 20px; font-size: 11px; font-weight: 700;
+    }
+
+    .inv-badge--available { background: #d1fae5; color: #065f46; }
+    .inv-badge--low { background: #fef3c7; color: #92400e; }
+    .inv-badge--out { background: #fee2e2; color: #991b1b; }
+    .inv-badge--misc { background: #e0f2fe; color: #0369a1; }
+
+    .inv-no-results { text-align: center; padding: 48px; color: var(--muted); font-size: 15px; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .mob-header { display: flex; }
+      .mob-nav { display: block; }
+      .topbar { display: none; }
+
+      .main {
+        margin-left: 0;
+        padding: calc(56px + env(safe-area-inset-top, 0px) + 12px) 14px calc(var(--bottom-nav-h) + var(--safe-bottom) + 10px);
+      }
+
+      .inv-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .inv-stat { padding: 12px; gap: 8px; }
+      .inv-stat-icon { font-size: 20px; }
+      .inv-stat-val { font-size: 22px; }
+      .inv-stat-label { font-size: 10px; }
+
+      .inv-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+      .inv-search-wrap { min-width: unset; }
+      .inv-filter-btns { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; gap: 6px; scrollbar-width: none; }
+      .inv-filter-btns::-webkit-scrollbar { display: none; }
+
+      .inv-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .inv-card-img-wrap { height: 105px; }
+      .inv-card-body { padding: 10px 11px; }
+      .inv-card-name { font-size: 12px; }
+    }
+
+    @media (max-width: 360px) {
+      .inv-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- DESKTOP SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <img src="images/marine.png" alt="AMT" class="sidebar-img">
+      <span>AMT System</span>
+    </div>
+    <ul>
+      <li onclick="window.location='index.html'">🏠 Dashboard</li>
+      <li class="active">📦 Inventory</li>
+      <li onclick="window.location='archives.html'">🗂️ Archives</li>
+      <li onclick="window.location='qrcode.html'">📱 QR Code</li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="sidebar-user-icon">👤</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="currentUser">Admin</div>
+        <button class="sidebar-logout" onclick="logout()">Log Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE HEADER -->
+  <div class="mob-header">
+    <div class="mob-header-inner">
+      <span class="mob-title">📦 Inventory</span>
+      <button class="sidebar-logout" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="mob-nav">
+    <div class="mob-nav-row">
+      <a class="mob-nav-item" href="index.html"><span class="ni">🏠</span>Dashboard</a>
+      <a class="mob-nav-item active" href="inventory.html"><span class="ni">📦</span>Inventory</a>
+      <a class="mob-nav-item" href="archives.html"><span class="ni">🗂️</span>Archives</a>
+      <a class="mob-nav-item" href="qrcode.html"><span class="ni">📱</span>QR Code</a>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <h1>Tool Inventory</h1>
+      <div id="clock"></div>
+    </header>
+
+    <div class="inv-stats">
+      <div class="inv-stat inv-stat--blue">
+        <div class="inv-stat-icon">🗂️</div>
+        <div><div class="inv-stat-val" id="s-types">0</div><div class="inv-stat-label">Tool Types</div></div>
+      </div>
+      <div class="inv-stat inv-stat--indigo">
+        <div class="inv-stat-icon">📦</div>
+        <div><div class="inv-stat-val" id="s-units">0</div><div class="inv-stat-label">Total Units</div></div>
+      </div>
+      <div class="inv-stat inv-stat--gold">
+        <div class="inv-stat-icon">🔧</div>
+        <div><div class="inv-stat-val" id="s-borrowed">0</div><div class="inv-stat-label">Borrowed</div></div>
+      </div>
+      <div class="inv-stat inv-stat--green">
+        <div class="inv-stat-icon">✅</div>
+        <div><div class="inv-stat-val" id="s-avail">0</div><div class="inv-stat-label">Available</div></div>
+      </div>
+    </div>
+
+    <div class="inv-toolbar">
+      <div class="inv-search-wrap">
+        <span class="inv-search-icon">🔍</span>
+        <input type="text" id="search" placeholder="Search tools…" oninput="render()">
+      </div>
+      <div class="inv-filter-btns">
+        <button class="inv-filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="inv-filter-btn" onclick="setFilter('available',this)">Available</button>
+        <button class="inv-filter-btn" onclick="setFilter('low',this)">Low Stock</button>
+        <button class="inv-filter-btn" onclick="setFilter('out',this)">Out of Stock</button>
+        <button class="inv-filter-btn" onclick="setFilter('misc',this)">Uncountable</button>
+      </div>
+    </div>
+
+    <div id="content"></div>
+  </div>
+
+  <script>
+    async function checkAuth() {
+      try {
+        const res  = await fetch('api/me.php', { credentials: 'include' });
+        const data = await res.json();
+        if (!data.ok) { window.location.href = 'login.html'; return; }
+        document.getElementById('currentUser').textContent = data.username || data.email;
+      } catch { window.location.href = 'login.html'; }
+    }
+    checkAuth();
+
+    window.logout = async function () {
+      await fetch('api/logout.php', { method: 'POST', credentials: 'include' });
+      window.location.href = 'login.html';
+    };
+
+    function updateClock() {
+      const el = document.getElementById('clock');
+      if (el) el.innerText = new Date().toLocaleString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+  <script src="inventory.js"></script>
+</body>
+</html>

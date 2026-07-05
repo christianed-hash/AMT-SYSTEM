@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Borrow a Tool — AMT System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #6b0000, #8b0000, #5a0000);
+      padding: 20px;
+      color: #0f172a;
+    }
+
+    .page-header {
+      text-align: center;
+      padding: 24px 0 20px;
+      color: white;
+    }
+
+    .page-header img { width: 90px; height: 90px; object-fit: contain; margin-bottom: 10px; border-radius: 50%; background: white; padding: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+    .page-header h1  { font-size: 22px; margin-bottom: 4px; }
+    .page-header p   { font-size: 13px; opacity: 0.8; }
+
+    /* ── Inventory grid ── */
+    .inv-section {
+      max-width: 900px;
+      margin: 0 auto 24px;
+    }
+
+    .inv-section h2 {
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      opacity: 0.9;
+    }
+
+    .inv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .inv-card {
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .inv-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    .inv-card.selected { border-color: #8b0000; box-shadow: 0 0 0 3px rgba(139,0,0,0.2); }
+    .inv-card.unavailable { opacity: 0.45; cursor: not-allowed; }
+
+    .inv-card-img {
+      width: 100%; height: 100px;
+      object-fit: contain; background: #f8fafc; padding: 6px;
+    }
+
+    .inv-card-placeholder {
+      width: 100%; height: 100px;
+      background: #f1f5f9; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 32px; color: #cbd5e1;
+    }
+
+    .inv-card-body { padding: 8px 10px 10px; }
+    .inv-card-name { font-size: 12px; font-weight: 600; color: #0f172a; line-height: 1.3; margin-bottom: 4px; }
+
+    .inv-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+    .inv-badge--available { background: #dcfce7; color: #15803d; }
+    .inv-badge--low       { background: #fef3c7; color: #b45309; }
+    .inv-badge--out       { background: #fee2e2; color: #b91c1c; }
+    .inv-badge--misc      { background: #dbeafe; color: #1d4ed8; }
+
+    /* ── Cart ── */
+    .cart-section {
+      max-width: 900px;
+      margin: 0 auto 24px;
+      display: none;
+    }
+
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .cart-header h2 { color: white; font-size: 15px; font-weight: 600; opacity: 0.9; }
+
+    .cart-proceed-btn {
+      background: white;
+      color: #8b0000;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .cart-proceed-btn:hover { background: #fff7f7; }
+
+    .cart-list { background: white; border-radius: 14px; overflow: hidden; }
+
+    .cart-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item-name { flex: 1; font-size: 13px; font-weight: 600; color: #0f172a; }
+
+    .cart-qty { display: flex; align-items: center; gap: 6px; }
+
+    .cart-qty button {
+      width: 28px; height: 28px;
+      border-radius: 8px; border: 1px solid #e2e8f0;
+      background: #f8fafc; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: #475569;
+    }
+
+    .cart-qty button:hover { background: #e2e8f0; }
+    .cart-qty span { min-width: 24px; text-align: center; font-size: 14px; font-weight: 700; color: #0f172a; }
+
+    .cart-remove {
+      background: none; border: none; color: #dc2626;
+      font-size: 18px; cursor: pointer; padding: 4px; border-radius: 6px;
+    }
+
+    .cart-remove:hover { background: #fee2e2; }
+
+    /* ── Form card ── */
+    .form-card {
+      background: white;
+      border-radius: 20px;
+      padding: 28px;
+      max-width: 480px;
+      margin: 0 auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      display: none;
+    }
+
+    .form-card h2 { font-size: 18px; margin-bottom: 16px; color: #0f172a; }
+
+    .cart-summary {
+      background: #fff7f7;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+    }
+
+    .cart-summary-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8b0000;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .cart-summary-item {
+      font-size: 13px;
+      color: #0f172a;
+      padding: 2px 0;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+
+    .field label {
+      font-size: 11px; font-weight: 700; color: #475569;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    .field input, .field select {
+      height: 44px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0 14px;
+      font-size: 14px;
+      color: #0f172a;
+      background: #f8fafc;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+
+    .field input:focus, .field select:focus {
+      border-color: #8b0000;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(139,0,0,0.1);
+    }
+
+    .submit-btn {
+      width: 100%; height: 46px;
+      background: #8b0000; color: white;
+      border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+      transition: background 0.15s;
+    }
+
+    .submit-btn:hover:not(:disabled) { background: #a00000; }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .msg {
+      display: none; text-align: center;
+      padding: 14px; border-radius: 10px;
+      font-size: 14px; margin-top: 16px; font-weight: 500;
+    }
+
+    .msg.success { background: #dcfce7; color: #15803d; }
+    .msg.error   { background: #fee2e2; color: #b91c1c; }
+
+    .pick-hint {
+      font-size: 13px;
+      color: rgba(255,255,255,0.75);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 480px) {
+      .inv-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <img src="images/marine.png" alt="AMT">
+    <h1>AMT Tool Borrowing</h1>
+    <p>Tap tools to add them to your request, then fill in your details</p>
+  </div>
+
+  <!-- STEP 1: Pick tools -->
+  <div class="inv-section">
+    <h2>Step 1 — Select tools (tap to add)</h2>
+    <p class="pick-hint">Tap a tool to add it to your request. You can add multiple tools.</p>
+
+    <div style="position:relative;margin-bottom:14px">
+      <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px;color:white;opacity:0.8">🔍</span>
+      <input type="text" id="toolSearch" placeholder="Search tools..."
+        oninput="filterGrid()"
+        style="width:100%;height:44px;border-radius:12px;border:none;padding:0 14px 0 40px;font-size:14px;outline:none;background:rgba(255,255,255,0.15);color:white;backdrop-filter:blur(4px);">
+    </div>
+
+    <div class="inv-grid" id="toolGrid">
+      <p style="color:white;font-size:13px">Loading tools...</p>
+    </div>
+  </div>
+
+  <!-- STEP 2: Cart -->
+  <div class="cart-section" id="cartSection">
+    <div class="cart-header">
+      <h2>🛒 Selected Tools <span id="cartCount" style="opacity:0.7;font-weight:400"></span></h2>
+      <button class="cart-proceed-btn" onclick="proceedToForm()">Fill in Details →</button>
+    </div>
+    <div class="cart-list" id="cartList"></div>
+  </div>
+
+  <!-- STEP 3: Fill up form -->
+  <div class="form-card" id="formCard">
+    <h2>Step 2 — Fill in your details</h2>
+
+    <div class="cart-summary" id="cartSummary"></div>
+
+    <form id="requestForm" onsubmit="submitRequest(event)">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="studentName" placeholder="e.g. Juan dela Cruz" required>
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="studentEmail" placeholder="e.g. juan@email.com" required>
+      </div>
+
+      <div class="field">
+        <label>Student ID</label>
+        <input type="text" id="studentId" placeholder="e.g. 2024-00123" required>
+      </div>
+
+      <div class="field">
+        <label>Year Level</label>
+        <select id="yearLevel" required>
+          <option value="">— Select year level —</option>
+          <option value="1st Year">1st Year</option>
+          <option value="2nd Year">2nd Year</option>
+          <option value="3rd Year">3rd Year</option>
+          <option value="4th Year">4th Year</option>
+        </select>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Submit Borrow Request</button>
+    </form>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <script>
+    const _base = window.location.pathname.replace(/\/request\.html.*$/, '/');
+    const API   = window.location.protocol + '//' + window.location.host + _base + 'api';
+
+    const RAW = [
+      { cat: "Hand Tools", name: "Screwdrivers", total: 10 },
+      { cat: "Hand Tools", name: "Rubber mallets", total: 7 },
+      { cat: "Hand Tools", name: "Ball-pein hammers", total: 6 },
+      { cat: "Hand Tools", name: "Claw hammers", total: 6 },
+      { cat: "Hand Tools", name: "Sledgehammers (Creston 2lb)", total: 2 },
+      { cat: "Hand Tools", name: "Steel pin hammers", total: 3 },
+      { cat: "Hand Tools", name: "Utility knives", total: 7 },
+      { cat: "Hand Tools", name: "Measuring tapes", total: 7 },
+      { cat: "Hand Tools", name: "Spirit levels", total: 3 },
+      { cat: "Hand Tools", name: "Square ruler", total: 1 },
+      { cat: "Hand Tools", name: "Pliers (cutter, long nose, multi-tester)", total: 9 },
+      { cat: "Hand Tools", name: "Socket wrench sets", total: 4 },
+      { cat: "Hand Tools", name: "Combination wrenches", total: 18 },
+      { cat: "Hand Tools", name: "Open-end wrenches", total: 12 },
+      { cat: "Hand Tools", name: "Adjustable wrenches", total: 6 },
+      { cat: "Hand Tools", name: "Allen keys (hex key set)", total: 1 },
+      { cat: "Hand Tools", name: "Tin snips / aviation shears", total: 4 },
+      { cat: "Hand Tools", name: "C-clamps", total: 4 },
+      { cat: "Pneumatic & Power Tools", name: "Pneumatic drills (Sumake, Neiko, Bosch)", total: 5 },
+      { cat: "Pneumatic & Power Tools", name: "Angle die grinders", total: 3 },
+      { cat: "Pneumatic & Power Tools", name: "Pneumatic riveting guns", total: 3 },
+      { cat: "Pneumatic & Power Tools", name: "Bosch angle grinders (GWS 6-100)", total: 6 },
+      { cat: "Precision & Specialty Tools", name: "Center punches", total: 6 },
+      { cat: "Precision & Specialty Tools", name: "Automatic center punches", total: 2 },
+      { cat: "Precision & Specialty Tools", name: "Pin punchers", total: 5 },
+      { cat: "Precision & Specialty Tools", name: "Chisels", total: 6 },
+      { cat: "Precision & Specialty Tools", name: "Scriber", total: 4 },
+      { cat: "Precision & Specialty Tools", name: "Deburring countersinks", total: 3 },
+      { cat: "Precision & Specialty Tools", name: "Drill stops", total: 4 },
+      { cat: "Precision & Specialty Tools", name: "Side grips", total: 3 },
+      { cat: "Precision & Specialty Tools", name: "Clamps and pullers", total: 6 },
+      { cat: "Accessories & Misc", name: "Toolboxes", total: 6 },
+      { cat: "Accessories & Misc", name: "Coiled hoses / cables", total: 4 },
+      { cat: "Accessories & Misc", name: "Paint brushes", total: 4 },
+      { cat: "Uncountable", name: "Rivets (various sizes)", total: null, misc: true },
+      { cat: "Uncountable", name: "Drill bits (assorted sets)", total: null, misc: true },
+      { cat: "Uncountable", name: "Lubricants, oils, spray cans", total: null, misc: true },
+    ];
+
+    const IMAGE_MAP = {
+      "Screwdrivers": "tools/screwdriver.jpg",
+      "Rubber mallets": "tools/rubber mullets.jpg",
+      "Ball-pein hammers": "tools/ball-pein hammer.jpg",
+      "Claw hammers": "tools/claw hammer.jpg",
+      "Sledgehammers (Creston 2lb)": "tools/sledgehammers.jpg",
+      "Steel pin hammers": "tools/steel pin hammer.jpg",
+      "Utility knives": "tools/utility knives.jpg",
+      "Measuring tapes": "tools/fiberglass long tape.jpg",
+      "Spirit levels": "tools/spirit level.jpg",
+      "Square ruler": "tools/square ruler.jpg",
+      "Pliers (cutter, long nose, multi-tester)": "tools/pliers cutter.jpg",
+      "Socket wrench sets": "tools/ratchet set.jpg",
+      "Combination wrenches": "tools/combination wrenches.jpg",
+      "Open-end wrenches": "tools/open-end wrenches.jpg",
+      "Adjustable wrenches": "tools/adjustable wrenches.jpg",
+      "Allen keys (hex key set)": "tools/allen keys set.jpg",
+      "Tin snips / aviation shears": "tools/tin snips.jpg",
+      "C-clamps": "tools/c-clamps.jpg",
+      "Pneumatic drills (Sumake, Neiko, Bosch)": "tools/pneumatic drills.png",
+      "Angle die grinders": "tools/angle die grinders.png",
+      "Pneumatic riveting guns": "tools/pneumatic riveting gun.png",
+      "Bosch angle grinders (GWS 6-100)": "tools/GWS 6-100.png",
+      "Center punches": "tools/center punches.png",
+      "Automatic center punches": "tools/auto center.png",
+      "Pin punchers": "tools/pin punchers.png",
+      "Chisels": "tools/chisel.png",
+      "Scriber": "tools/scriber.jpg",
+      "Deburring countersinks": "tools/deburring countersinks.png",
+      "Drill stops": "tools/drill stops.png",
+      "Side grips": "tools/side grips.png",
+      "Clamps and pullers": "tools/clamps and pullers.png",
+      "Toolboxes": "tools/toolboxes(orange).jpg",
+      "Coiled hoses / cables": "tools/coiled cables.jpg",
+      "Paint brushes": "tools/paint brush.jpg",
+      "Rivets (various sizes)": "tools/rivet.png",
+      "Drill bits (assorted sets)": "tools/drilled bits.jpg",
+      "Lubricants, oils, spray cans": "tools/lubricants.jpg",
+    };
+
+    let tools = RAW.map((t, i) => ({ ...t, id: i, borrowed: 0 }));
+    // cart: { name, qty }
+    let cart = [];
+
+    async function loadInventory() {
+      try {
+        const res  = await fetch(`${API}/availability.php`);
+        const data = await res.json();
+        const borrowed = data.borrowed || {};
+        tools.forEach(t => {
+          t.borrowed = borrowed[t.name] || 0;
+        });
+      } catch {}
+      renderGrid();
+    }
+
+    function getStatus(t) {
+      if (t.misc) return 'misc';
+      const avail = t.total - t.borrowed;
+      if (avail === 0) return 'out';
+      if (avail < 3) return 'low';
+      return 'available';
+    }
+
+    function filterGrid() { renderGrid(); }
+
+    function renderGrid() {
+      const q    = (document.getElementById('toolSearch')?.value || '').toLowerCase();
+      const grid = document.getElementById('toolGrid');
+      const list = q ? tools.filter(t => t.name.toLowerCase().includes(q) || t.cat.toLowerCase().includes(q)) : tools;
+      if (!list.length) { grid.innerHTML = '<p style="color:rgba(255,255,255,0.7);font-size:13px">No tools found.</p>'; return; }
+
+      grid.innerHTML = list.map(t => {
+        const s      = getStatus(t);
+        const avail  = t.misc ? null : t.total - t.borrowed;
+        const unavail = s === 'out';
+        const inCart  = cart.find(c => c.name === t.name);
+
+        const badge = t.misc
+          ? `<span class="inv-badge inv-badge--misc">In Stock</span>`
+          : s === 'out' ? `<span class="inv-badge inv-badge--out">Out of Stock</span>`
+          : s === 'low' ? `<span class="inv-badge inv-badge--low">${avail} left</span>`
+          : `<span class="inv-badge inv-badge--available">${avail} available</span>`;
+
+        const imgSrc  = IMAGE_MAP[t.name];
+        const imgHtml = imgSrc
+          ? `<img src="${imgSrc}" alt="${t.name}" class="inv-card-img">`
+          : `<div class="inv-card-placeholder">🔧</div>`;
+
+        return `
+          <div class="inv-card${unavail ? ' unavailable' : ''}${inCart ? ' selected' : ''}"
+               onclick="${unavail ? '' : `addToCart('${t.name.replace(/'/g, "\\'")}')`}"
+               id="card-${t.id}">
+            ${imgHtml}
+            <div class="inv-card-body">
+              <div class="inv-card-name">${t.name}</div>
+              ${badge}
+              ${inCart ? `<div style="font-size:10px;color:#8b0000;font-weight:700;margin-top:3px">✓ Added (×${inCart.qty})</div>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function getMaxQty(name) {
+      const tool = tools.find(t => t.name === name);
+      if (!tool || tool.misc) return 99; // uncountable — no limit
+      const avail = tool.total - tool.borrowed;
+      return Math.max(1, Math.floor(avail / 2));
+    }
+
+    function addToCart(name) {
+      const existing = cart.find(c => c.name === name);
+      const max = getMaxQty(name);
+      if (existing) {
+        if (existing.qty < max) {
+          existing.qty++;
+        } else {
+          alert(`Maximum quantity for this tool is ${max} (half of available stock).`);
+          return;
+        }
+      } else {
+        cart.push({ name, qty: 1, max });
+      }
+      renderCart();
+      renderGrid();
+    }
+
+    function removeFromCart(name) {
+      cart = cart.filter(c => c.name !== name);
+      renderCart();
+      renderGrid();
+    }
+
+    function changeQty(name, delta) {
+      const item = cart.find(c => c.name === name);
+      if (!item) return;
+      const max     = getMaxQty(name);
+      const newQty  = item.qty + delta;
+      if (newQty < 1) return;
+      if (newQty > max) {
+        alert(`Maximum quantity for this tool is ${max} (half of available stock).`);
+        return;
+      }
+      item.qty = newQty;
+      renderCart();
+      renderGrid();
+    }
+
+    function renderCart() {
+      const section = document.getElementById('cartSection');
+      const list    = document.getElementById('cartList');
+      const count   = document.getElementById('cartCount');
+
+      if (!cart.length) {
+        section.style.display = 'none';
+        document.getElementById('formCard').style.display = 'none';
+        return;
+      }
+
+      section.style.display = 'block';
+      count.textContent = `(${cart.length} tool${cart.length !== 1 ? 's' : ''})`;
+
+      list.innerHTML = cart.map(item => {
+        const max = getMaxQty(item.name);
+        return `
+        <div class="cart-item">
+          <div class="cart-item-name">🔧 ${item.name}
+            <span style="font-size:10px;color:#94a3b8;font-weight:400;margin-left:6px">max ${max}</span>
+          </div>
+          <div class="cart-qty">
+            <button onclick="changeQty('${item.name.replace(/'/g, "\\'")}', -1)">−</button>
+            <span>${item.qty}</span>
+            <button onclick="changeQty('${item.name.replace(/'/g, "\\'")}', 1)" ${item.qty >= max ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}>+</button>
+          </div>
+          <button class="cart-remove" onclick="removeFromCart('${item.name.replace(/'/g, "\\'")}')">✕</button>
+        </div>
+      `}).join('');
+    }
+
+    function proceedToForm() {
+      if (!cart.length) return;
+
+      // Update cart summary in form
+      const summary = document.getElementById('cartSummary');
+      summary.innerHTML = `
+        <div class="cart-summary-title">🛒 Tools to Borrow</div>
+        ${cart.map(item => `<div class="cart-summary-item">• ${item.name} × ${item.qty}</div>`).join('')}
+      `;
+
+      const formCard = document.getElementById('formCard');
+      formCard.style.display = 'block';
+      formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function submitRequest(e) {
+      e.preventDefault();
+      if (!cart.length) return;
+
+      const btn = document.getElementById('submitBtn');
+      const msg = document.getElementById('msg');
+      btn.disabled    = true;
+      btn.textContent = 'Submitting…';
+      msg.style.display = 'none';
+
+      const studentName  = document.getElementById('studentName').value.trim();
+      const studentEmail = document.getElementById('studentEmail').value.trim();
+      const studentId    = document.getElementById('studentId').value.trim();
+      const yearLevel    = document.getElementById('yearLevel').value;
+      // Auto-detect semester from current month
+      // 1st Semester: August–December | 2nd Semester: January–July
+      const month    = new Date().getMonth() + 1; // 1–12
+      const semester = month >= 8 ? '1st Semester' : '2nd Semester';
+
+      try {
+        // Submit one request per cart item
+        const promises = cart.map(item =>
+          fetch(`${API}/requests.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              studentName,
+              studentEmail,
+              studentId,
+              yearLevel,
+              semester,
+              toolName: item.name,
+              quantity: item.qty,
+            })
+          }).then(async r => {
+            const text = await r.text();
+            try {
+              return JSON.parse(text);
+            } catch {
+              // Server returned non-JSON — show the raw response for debugging
+              return { ok: false, error: 'Server returned non-JSON: ' + text.substring(0, 300) };
+            }
+          })
+        );
+
+        const results = await Promise.all(promises);
+        const allOk   = results.every(r => r.ok);
+
+        if (allOk) {
+          msg.innerHTML     = '⏳ Request submitted! Waiting for admin approval...';
+          msg.className     = 'msg success';
+          msg.style.display = 'block';
+
+          // Save submitted items for the approval message
+          const submittedItems = cart.map((item, i) => ({
+            name: item.name,
+            qty: item.qty,
+            requestId: results[i]?.requestId,
+          }));
+
+          document.getElementById('requestForm').reset();
+          document.getElementById('formCard').style.display = 'none';
+          document.getElementById('cartSection').style.display = 'none';
+          cart = [];
+          renderGrid();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+
+          // Poll all submitted request IDs
+          const validItems = submittedItems.filter(i => i.requestId);
+          if (validItems.length) {
+            startStatusPolling(validItems);
+          }
+        } else {
+          const err = results.find(r => !r.ok)?.error || 'Something went wrong.';
+          msg.textContent   = '❌ ' + err;
+          msg.className     = 'msg error';
+          msg.style.display = 'block';
+        }
+      } catch (err) {
+        msg.textContent   = '❌ Could not connect to server. (' + (err.message || 'Network error') + ')';
+        msg.className     = 'msg error';
+        msg.style.display = 'block';
+      }
+
+      btn.disabled    = false;
+      btn.textContent = 'Submit Borrow Request';
+    }
+
+    function startStatusPolling(items) {
+      const msg = document.getElementById('msg');
+      // Track state per request: { name, qty, requestId, status }
+      const tracked = items.map(i => ({ ...i, status: 'pending' }));
+
+      const interval = setInterval(async () => {
+        try {
+          // Poll all still-pending items
+          await Promise.all(
+            tracked
+              .filter(i => i.status === 'pending')
+              .map(async i => {
+                const res  = await fetch(`${API}/requests.php?id=${i.requestId}`);
+                const data = await res.json();
+                if (data.ok && data.status !== 'pending') {
+                  i.status       = data.status;
+                  // Use server-returned quantity if available (reflects admin-approved qty)
+                  if (data.quantity) i.qty = data.quantity;
+                  // Capture the timestamp the admin responded
+                  if (data.responded_at) i.responded_at = data.responded_at;
+                  // Capture the return deadline set by admin
+                  if (data.due_date) i.due_date = data.due_date;
+                }
+              })
+          );
+
+          const allDone    = tracked.every(i => i.status !== 'pending');
+          const anyApproved = tracked.some(i => i.status === 'approved');
+          const anyRejected = tracked.some(i => i.status === 'rejected');
+
+          if (allDone) {
+            clearInterval(interval);
+
+            if (anyApproved && !anyRejected) {
+              // All approved
+              const itemList = tracked
+                .map(i => {
+                  const dueStr = i.due_date
+                    ? `<span style="font-size:11px;color:#166534;display:block;margin-top:2px">📅 Return by: <strong>${new Date(i.due_date).toLocaleString()}</strong></span>`
+                    : '';
+                  return `<li style="margin-bottom:6px">🔧 <strong>${i.name}</strong> × ${i.qty}${dueStr}</li>`;
+                })
+                .join('');
+              const respondedAt = tracked.find(i => i.responded_at)?.responded_at;
+              const timeStr = respondedAt
+                ? `<div style="font-size:12px;color:#166534;margin-top:8px;opacity:0.8">⏱ Responded at: ${new Date(respondedAt).toLocaleString()}</div>`
+                : '';
+              msg.innerHTML = `✅ <strong>Your request has been accepted!</strong><br>
+                You may now collect the following from the tool room:<br>
+                <ul style="text-align:left;margin:8px 0 0 16px;padding:0;list-style:none">${itemList}</ul>
+                ${timeStr}`;
+              msg.className = 'msg success';
+            } else if (!anyApproved && anyRejected) {
+              // All rejected
+              const respondedAt = tracked.find(i => i.responded_at)?.responded_at;
+              const timeStr = respondedAt
+                ? `<div style="font-size:12px;color:#991b1b;margin-top:8px;opacity:0.8">⏱ Responded at: ${new Date(respondedAt).toLocaleString()}</div>`
+                : '';
+              msg.innerHTML = `❌ <strong>Sorry, your request was not approved.</strong><br>Please try requesting different tools.${timeStr}`;
+              msg.className = 'msg error';
+            } else {
+              // Mixed — show per-item breakdown
+              const itemList = tracked.map(i => {
+                const icon   = i.status === 'approved' ? '✅' : '❌';
+                const label  = i.status === 'approved' ? 'Accepted' : 'Rejected';
+                const dueStr = i.status === 'approved' && i.due_date
+                  ? `<span style="font-size:11px;color:#1e40af;display:block;margin-top:2px">📅 Return by: <strong>${new Date(i.due_date).toLocaleString()}</strong></span>`
+                  : '';
+                return `<li style="margin-bottom:6px">${icon} <strong>${i.name}</strong> × ${i.qty} — ${label}${dueStr}</li>`;
+              }).join('');
+              const respondedAt = tracked.find(i => i.responded_at)?.responded_at;
+              const timeStr = respondedAt
+                ? `<div style="font-size:12px;color:#1e40af;margin-top:8px;opacity:0.8">⏱ Responded at: ${new Date(respondedAt).toLocaleString()}</div>`
+                : '';
+              msg.innerHTML = `ℹ️ <strong>Request partially processed:</strong><br>
+                <ul style="text-align:left;margin:8px 0 0 16px;padding:0;list-style:none">${itemList}</ul>
+                ${timeStr}`;
+              msg.className = 'msg success';
+            }
+          } else {
+            // Update pending message with progress
+            const done    = tracked.filter(i => i.status !== 'pending').length;
+            const total   = tracked.length;
+            msg.innerHTML = `⏳ Waiting for admin approval… (${done}/${total} processed)`;
+          }
+        } catch { clearInterval(interval); }
+      }, 5000);
+    }
+
+    loadInventory();
+  </script>
+
+</body>
+</html>
